@@ -1,5 +1,5 @@
 Script started on Fri May 26 17:11:44 2023
-]0;root@lvm:~[?1034h[root@lvm ~]# lsblk
+]0;root@lvm:~[?1034h[root@lvm ~]# lsblk ###### убеждаемся что корневой каталог перенесен
 NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
 sda                       8:0    0   40G  0 disk 
 |-sda1                    8:1    0    1M  0 part 
@@ -12,14 +12,14 @@ sdb                       8:16   0   10G  0 disk
 sdc                       8:32   0    2G  0 disk 
 sdd                       8:48   0    1G  0 disk 
 sde                       8:64   0    1G  0 disk 
-]0;root@lvm:~[root@lvm ~]# lvremove /dev/VolGroup00/LogVol00
+]0;root@lvm:~[root@lvm ~]# lvremove /dev/VolGroup00/LogVol00 ###### удаляем старую логическую группу
 Do you really want to remove active logical volume VolGroup00/LogVol00? [y/n]: y
   Logical volume "LogVol00" successfully removed
-]0;root@lvm:~[root@lvm ~]# lvcreate -n VolGroup00/LogVol00 -L 8G /dev/VolGroup00
+]0;root@lvm:~[root@lvm ~]# lvcreate -n VolGroup00/LogVol00 -L 8G /dev/VolGroup00 ######создаем новый логический том с меньшим обьемом
 WARNING: xfs signature detected on /dev/VolGroup00/LogVol00 at offset 0. Wipe it? [y/n]: y
   Wiping xfs signature on /dev/VolGroup00/LogVol00.
   Logical volume "LogVol00" created.
-]0;root@lvm:~[root@lvm ~]# mkfs.xfs /dev/VolGroup00/LogVol00
+]0;root@lvm:~[root@lvm ~]# mkfs.xfs /dev/VolGroup00/LogVol00 ###### создаем файловую систему
 meta-data=/dev/VolGroup00/LogVol00 isize=512    agcount=4, agsize=524288 blks
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=0, sparse=0
@@ -29,8 +29,8 @@ naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
 log      =internal log           bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
-]0;root@lvm:~[root@lvm ~]# mount /dev/VolGroup00/LogVol00 /mnt
-]0;root@lvm:~[root@lvm ~]# xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt
+]0;root@lvm:~[root@lvm ~]# mount /dev/VolGroup00/LogVol00 /mnt ###### монтируем
+]0;root@lvm:~[root@lvm ~]# xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt ###### опять переносим данные с временного тома на будущий том
 xfsdump: using file dump (drive_simple) strategy
 xfsdump: version 3.1.7 (dump format 3.0)
 xfsdump: level 0 dump of lvm:/
@@ -73,16 +73,18 @@ xfsdump: dump complete: 10 seconds elapsed
 xfsdump: Dump Status: SUCCESS
 xfsrestore: restore complete: 10 seconds elapsed
 xfsrestore: Restore Status: SUCCESS
-]0;root@lvm:~[root@lvm ~]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/ $i; done
-]0;root@lvm:~[root@lvm ~]# chroot /mnt/
-]0;root@lvm:/[?1034h[root@lvm /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+]0;root@lvm:~[root@lvm ~]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/ ###### монтируем катологи
+$i; done
+]0;root@lvm:~[root@lvm ~]# chroot /mnt/ ###### меняем корневой каталог
+]0;root@lvm:/[?1034h[root@lvm /]# grub2-mkconfig -o /boot/grub2/grub.cfg ###### пресобираем загрузчик
 Generating grub configuration file ...
 Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
 Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
 done
-]0;root@lvm:/[root@lvm /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i| sed "s/initramfs-//g;
+]0;root@lvm:/[root@lvm /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i| 
+sed "s/initramfs-//g; ###### конфигурируем initrd
 > s/.img//g"` --force; done
-Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
+Executing: /sbin/dracut -v initramfs конфигурируем initrd3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
 dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
 dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
@@ -139,15 +141,15 @@ Skipping udev rule: 91-permissions.rules
 *** Creating image file ***
 *** Creating image file done ***
 *** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
-]0;root@lvm:/boot[root@lvm boot]# ~]#pvcreate /dev/sdc /dev/sdd[1P[1P[1P
+]0;root@lvm:/boot[root@lvm boot]# ~]#pvcreate /dev/sdc /dev/sdd[1P[1P[1P ###### создаем два физических тома
   Physical volume "/dev/sdc" successfully created.
   Physical volume "/dev/sdd" successfully created.
-]0;root@lvm:/boot[root@lvm boot]# vgcreate vg_var /dev/sdc /dev/sdd
+]0;root@lvm:/boot[root@lvm boot]# vgcreate vg_var /dev/sdc /dev/sdd ###### добавляем их в общую группу
   Volume group "vg_var" successfully created
-]0;root@lvm:/boot[root@lvm boot]# lvcreate -L 950M -m1 -n lv_var vg_var
+]0;root@lvm:/boot[root@lvm boot]# lvcreate -L 950M -m1 -n lv_var vg_var ###### на базе этой группы собираем логическо зеркало
   Rounding up size to full physical extent 952.00 MiB
   Logical volume "lv_var" created.
-]0;root@lvm:/boot[root@lvm boot]# mkfs.ext4 /dev/vg_var/lv_var
+]0;root@lvm:/boot[root@lvm boot]# mkfs.ext4 /dev/vg_var/lv_var ###### создаем файловую систему
 mke2fs 1.42.9 (28-Dec-2013)
 Filesystem label=
 OS type: Linux
@@ -169,12 +171,13 @@ Writing inode tables: 0/8   done
 Creating journal (4096 blocks): done
 Writing superblocks and filesystem accounting information: 0/8   done
 
-]0;root@lvm:/boot[root@lvm boot]# mount /dev/vg_var/lv_var /mnt
-]0;root@lvm:/boot[root@lvm boot]# cp -aR /var/* /mnt/
-]0;root@lvm:/boot[root@lvm boot]# mkdir /tmp/oldvar && mv /var/* /tmp/oldvar
-]0;root@lvm:/boot[root@lvm boot]# umount /mnt
-]0;root@lvm:/boot[root@lvm boot]# mount /dev/vg_var/lv_var /var
-]0;root@lvm:/boot[root@lvm boot]# echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults  0 0" >> /etc/fstab
+]0;root@lvm:/boot[root@lvm boot]# mount /dev/vg_var/lv_var /mnt ###### монтируем
+]0;root@lvm:/boot[root@lvm boot]# cp -aR /var/* /mnt/ ###### копируем информацию с каталога var
+]0;root@lvm:/boot[root@lvm boot]# mkdir /tmp/oldvar && mv /var/* /tmp/oldvar ###### создаем новую папку и переносим информацию
+]0;root@lvm:/boot[root@lvm boot]# umount /mnt ###### отмонтируем
+]0;root@lvm:/boot[root@lvm boot]# mount /dev/vg_var/lv_var /var ###### монтируем свежесозданнуый каталог  vat
+]0;root@lvm:/boot[root@lvm boot]# echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults  
+ 0 0" >> /etc/fstab ###### добавляем информацию для автомонтирования
 ]0;root@lvm:/boot[root@lvm boot]# exit
 exit
 ]0;root@lvm:~[root@lvm ~]# exit
