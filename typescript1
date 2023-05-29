@@ -1,11 +1,11 @@
 Script started on Fri May 26 16:35:20 2023
-]0;root@lvm:~[?1034h[root@lvm ~]# pvcreate /dev/sdb
+]0;root@lvm:~[?1034h[root@lvm ~]# pvcreate /dev/sdb ######создаем физический том
   Physical volume "/dev/sdb" successfully created.
-]0;root@lvm:~[root@lvm ~]# vgcreate vg_root /dev/sdb
+]0;root@lvm:~[root@lvm ~]# vgcreate vg_root /dev/sdb #######создаем группу томов
   Volume group "vg_root" successfully created
-]0;root@lvm:~[root@lvm ~]# lvcreate -n lv_root -l +100%FREE /dev/vg_root
+]0;root@lvm:~[root@lvm ~]# lvcreate -n lv_root -l +100%FREE /dev/vg_root #######создаем логический том непосредственно для работы
   Logical volume "lv_root" created.
-]0;root@lvm:~[root@lvm ~]# mkfs.xfs /dev/vg_root/lv_root
+]0;root@lvm:~[root@lvm ~]# mkfs.xfs /dev/vg_root/lv_root #######организуем файловую систему
 meta-data=/dev/vg_root/lv_root   isize=512    agcount=4, agsize=655104 blks
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=0, sparse=0
@@ -15,8 +15,8 @@ naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
 log      =internal log           bsize=4096   blocks=2560, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
-]0;root@lvm:~[root@lvm ~]# mount /dev/vg_root/lv_root /mnt
-]0;root@lvm:~[root@lvm ~]# xfsdump -J - /dev/VolGroup00/LogVol00 | xfsrestore -J - /mnt
+]0;root@lvm:~[root@lvm ~]# mount /dev/vg_root/lv_root /mnt #######монтируем созданный том
+]0;root@lvm:~[root@lvm ~]# xfsdump -J - /dev/VolGroup00/LogVol00 | xfsrestore -J - /mnt #######копируем информацию с / на созданный резервный том
 xfsrestore: using file dump (drive_simple) strategy
 xfsrestore: version 3.1.7 (dump format 3.0)
 xfsdump: using file dump (drive_simple) strategy
@@ -59,14 +59,16 @@ xfsdump: dump complete: 10 seconds elapsed
 xfsdump: Dump Status: SUCCESS
 xfsrestore: restore complete: 10 seconds elapsed
 xfsrestore: Restore Status: SUCCESS
-]0;root@lvm:~[root@lvm ~]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/ $i; done
-]0;root@lvm:~[root@lvm ~]# chroot /mnt/
-]0;root@lvm:/[?1034h[root@lvm /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+]0;root@lvm:~[root@lvm ~]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/ #######монтируем новые директории
+$i; done
+]0;root@lvm:~[root@lvm ~]# chroot /mnt/ #######меняем корневой каталог
+]0;root@lvm:/[?1034h[root@lvm /]# grub2-mkconfig -o /boot/grub2/grub.cfg #######переконфигурируем загрузчик
 Generating grub configuration file ...
 Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
 Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
 done
-]0;root@lvm:/[root@lvm /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i| sed "s/initramfs-//g;
+]0;root@lvm:/[root@lvm /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i| 
+sed "s/initramfs-//g; ####### пересобираем initrd
 > s/.img//g"` --force; done
 Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
 dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
@@ -125,7 +127,8 @@ Skipping udev rule: 91-permissions.rules
 *** Creating image file ***
 *** Creating image file done ***
 *** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
-]0;root@lvm:/boot[root@lvm boot]# sed -i 's|rd.lvm.lv=VolGroup00/LogVol00|rd.lvm.lv=vg_root/lv_ro ot|g' /boot/grub2/grub.cfg
+]0;root@lvm:/boot[root@lvm boot]# sed -i 's|rd.lvm.lv=VolGroup00/LogVol00|rd.lvm.lv=vg_root/lv_ro 
+ot|g' /boot/grub2/grub.cfg ###### вносим правки в конфиг загрузчики для загрузки с нового расположения
 ]0;root@lvm:/boot[root@lvm boot]# exit
 exit
 ]0;root@lvm:~[root@lvm ~]# exit
